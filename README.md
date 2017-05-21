@@ -47,7 +47,7 @@ import json
 json_file = open("WEBPAGES_CLEAN/bookkeeping.json","r")
 json_content = json_file.read()
 json_file.close()
-json_obj = json.loads(json_content) ## JSON is now a path dictionary object that can queried and iterated over.
+json_obj = json.loads(json_content) ## JSON is now a python dictionary object that can queried and iterated over.
 ```
 
 ## HTML Parsing
