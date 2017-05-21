@@ -11,8 +11,47 @@ To install through pip open a terminal and type
 ```
 python -m pip install pymongo
 ```
+First, if your MongoDB server is on localhost turn it on with a terminal using
+For Windows:
+```
+cd %MONGO_INSTALLATION_PATH%
+mongod.exe --dbpath %MONGO_DATA_DIRECTORY_PATH%
+```
+Once on in Python to connect use 
+```python
+from pymongo import MongoClient
+import json
+from pprint import pprint
+from bson import ObjectId
+HOST = "localhost"
+PORT = 27017
+client = MongoClient(HOST,PORT) ## Establish connection
+database = client["Name_of_your_db_to_use"] ## Choose database
+chosenCollection = database.collection_to_use ## Use collection name in place of collection_to_use
+docs = chosenCollection.find({})
+for doc in docs: 
+	pprint(doc)  ### Display all document entries in the collection
+#### To update an existing document
+post = chosenCollection.find_one({"name":"old_doc"})
+post["name"] = "new_doc"
+chosenCollection.save(post)
+```
 
-BeautifulSoup4 for now is the best HTML Parser and handles the broken tag problem as mentioned in the write-up.
+## Mapping files to URL's 
+In the file, `bookkeeping.json` all the urls are matched into their correpsonding files in <strong>WEBPAGES_CLEAN</strong> as key, value
+pairs. When doing a search this will be the starting point of the iteration as we when we create the <strong>document object</strong> to 
+put into the database we will have the url to map through the file as we iterate and parse it, looking for the search term. To be able 
+to extract and use the json in python use:
+```python
+import json
+json_file = open("WEBPAGES_CLEAN/bookkeeping.json","r")
+json_content = json_file.read()
+json_file.close()
+json_obj = json.loads(json_content) ## JSON is now a path dictionary object that can queried and iterated over.
+```
+
+## HTML Parsing
+<a href="https://www.crummy.com/software/BeautifulSoup/bs4/doc/" target="_blank">BeautifulSoup4</a> for now is the best HTML Parser and handles the broken tag problem as mentioned in the write-up.
 So for example a file of `someHTML.html`
 ```html
 <html>
