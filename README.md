@@ -1,6 +1,36 @@
 # CS121-Corpus-Parse
 CS 121 Collaborative Project
 
+## Map/Index Logic
+The map logic is convoluted so it is listed explicitly here.  By URL I mean doc or link, not necessarily hyperlink.
+
+The parser will create Info objects of type info = Info(term, url, score, file)
+
+They are as follows:<br>
+term - string extracted from file<br>
+url - url the file came from<br>
+file - the name of the file<br>
+score - a number relative to how important the term is.    This is something we have to decide, such as 100 for h1, 50 for h2, etc...  It could also be a formula of some kind.
+
+The parser will send Info objects one at a time to infoToMap(info)<br>
+Here, the objects are decomposed and placed into appropriate dictionaries as follows:
+1. 'index' is the inverted index where search terms are the keys.  Inside are info objects that only use:<br>
+a. A 'links' dictionary that holds URL objects<br>
+b. URL objects contain: <br>
+name = url link<br>
+count = # of times this term has appeared in this url<br>
+score = who knows we'll figure it out<br>
+file name =  where the URL was retrieved<br>
+2. urlMap and fileNameMap for optimization later
+
+Searches are performed as follows:
+1. Search term is given by user through GUI interface and passed to search(term) function
+2. 'index' is searched for existence of index[term] key
+3. If found, the dictionary for 'links' in index[term].links is retrieved<br>
+a. This is a list of the URL's containing this search term
+4. URL's are sorted by 'score'
+5. Top 10 URL's are returned
+
 ## Document Template
 When a file is parsed through a large <em>dictionary object</em> will be made of the form like this for now:
 ```python
