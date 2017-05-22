@@ -1,6 +1,29 @@
 # CS121-Corpus-Parse
 CS 121 Collaborative Project
 
+## Document Template
+When a file is parsed through a large <em>dictionary object</em> will be made of the form like this for now:
+```python
+document_template = 
+{  "query": "search_term", 
+   "priority": {"h1": 5,"h2": 4, "h3": 6,"title": 2,"b": 4,"strong": 12},
+   "tagSum": 33,
+   "tagRanking" : 123, ## This number would be determined by the frequency of each type of tag it was in, each one having a different 				##weight number
+   "count": 456,    ## Total amount of times it has been encountered from searching all the file so far
+   "document_frequency": 2,
+   "scores": [{"0/1":12}, {"0/101",4.56}],
+   		## The score a document,query pair is product of term-frequency-weight with its document frequency weight. The formula 
+		## is on the lecture 12 slides.
+   "current_rank": 3 ,
+   		##Computed from scores above not sure how to implement, it is in lecture 13 slides, will likely be calculated once
+   		## all files or a large number of files have been parsed
+   "file_info": [{"file_name":"0/1","url":"www.ics.uci.edu/~ejw/pres/stc-99/sld009.htm","line_encountered":[1,4,55,66,101]},		
+   		 {"file_name": "0/101","url":"cbcl.ics.uci.edu/doku.php/software/arem?do=login&sectok=dd041326677606876341a676d7ce3884",
+		 	"lines_encountered":[4,5,67,89]}]
+  ## To find out which file matches which url just look through bookkeeping.json
+}
+```
+
 ## Setup
 How to <a href="http://api.mongodb.com/python/current/tutorial.html" target="_blank">link a Python Script to a MongoDB Database</a>
 
