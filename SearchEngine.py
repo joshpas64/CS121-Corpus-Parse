@@ -104,9 +104,9 @@ urlMap = {}
 ##print(index["hello"].fileName)
 if __name__ == "__main__":
     myMainCollection = CorpusParser.makeMongoCollection(CorpusParser.HOST,CorpusParser.PORT,"HW3_Corpus","HW3_Corpus")
-    irvineDoc = myMainCollection.find_one({"query":"informatics"})
-    irvineInfoList = parseDoc(irvineDoc)
-    for info in irvineInfoList:
+    informaticsDoc = myMainCollection.find_one({"query":"informatics"})
+    informaticsInfoList = parseDoc(informaticsDoc)
+    for info in informaticsInfoList:
         infoToMap(info)
     writeToFile()
     loadFromFile()
