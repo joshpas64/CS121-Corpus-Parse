@@ -31,6 +31,48 @@ a. This is a list of the URL's containing this search term
 4. URL's are sorted by 'score'
 5. Top 10 URL's are returned
 
+## Joining Parsed Document into the Index File
+So when a user enters a query that is not in the index file. The program would need to navigate and search through all the files in the 
+Corpus being <strong>WEBPAGES_CLEAN</strong>. So in <em>CorpusParser.py</em>, a new object of type <strong>DbEntry</strong> will be 
+made. Objects of this type contain the document objects to be passed to <em>SearchEngine.py</em> as well as other fields needed to 
+create and connect to the local database and to make the phrase into a search token (like making it lowercase,stripping out whitespace 
+characters etc.) as well as methods to parse through a file and update the document object and save to the database. The tokenizing is 
+done by <strong>nltk library</strong>. The document object is stored in DbEntry's `.queryDocument` field which is the same document that 
+will be retrieved if queried from database.
+
+Once the object is ready to be added to the index in <strong>SearchEngine.py</strong>. The document whether being passed from a DbEntry or retrieved from the database will be passed into `parseDoc(document_obj)` with the definition as follows:
+```python
+def parseDoc(document):
+    searchTerm = document["query"] ### All the info objects being created will be associated to the document's query term
+    ##scores = document["scores"] ##Extra field to add for ranking later
+    ##doc_freq = document["document_frequency"] ##Once again something to consider for scoring later
+    infoList = [] ### Info Objects are associations of (a single query, a single file, a single url)
+    ####             So we can make many info Objects from one Term document since it contains ALL the file matches
+    idfScore = IndexWeights.getIdfScore(CorpusParser.DOCUMENT_TOTAL,document["document_frequency"]) ## idfScore only depends on term's 
+   	 ##frequency to the Whole Collection of files so only needs to be calculated once as long as document frequency is up-to-date
+    index = 0 ## To iterate through score list, all the files and urls correspond
+    for fileObject in document["file_matches"]:     ### Iterate through all the files that have the query in it
+        fileName = fileObject["file_name"] 
+        urlName = fileObject["file_url"]
+        baseScore = document["scores"][index][fileName] ##Get the fileName's tf Score
+        tfDf = baseScore * idfScore ## Calculate tfDf score now that idf Score is available
+        newInfo = Info(searchTerm,fileName,tfDf,urlName) ## Make a new info object
+        newInfo.count = document["count"] ## Updates its count to match the document's count of terms
+        newInfo.priority = document["priority"] ## Update it to have the count of each html tags it matched to
+        infoList.append(newInfo) ## Add to list
+        index += 1
+    return infoList ## Return List
+```
+Once the Info Objects have been returned from `parseDoc` the index can be updated by just following the example in Miguel's file
+Example Code:
+```python
+termObjects = parseDoc(termDocumentObject)
+for info in termObjects:
+	infoToMap(info) ##Update the index objects of SearchEngine.py with newly created Info object from parseDoc
+writeToFile()   ##Update the index File 
+loadFromFile()  
+```
+
 ## Document Template
 When a file is parsed through a large <em>dictionary object</em> will be made of the form like this for now:
 ```python
