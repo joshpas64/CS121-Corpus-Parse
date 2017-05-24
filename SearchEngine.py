@@ -4,110 +4,115 @@
 # at http://jsonpickle.github.io/
 # pip install -U jsonpickle
 import jsonpickle
-import CorpusParser
-import IndexWeights
+
 # (object) added for jsonpickle decoding
 class Info(object):
-    def __init__(self, term, fileName, score,url):
+    def __init__(self, term, url, score, file):
         self.term = term
         self.priority = ""
-        self.count = 1
         self.score = score
-        self.fileName = fileName
-        self.url = url
-        self.links = {}
-## Make smaller sized info object from only the needed fields of the
-## document object retrieved from parsing or fetched from the database
-def parseDoc(document):
-    searchTerm = document["query"]
-    ##scores = document["scores"] ##Extra field to add for ranking later
-    ##doc_freq = document["document_frequency"] ##Once again something to consider for scoring later
-    infoList = []
-    idfScore = IndexWeights.getIdfScore(CorpusParser.DOCUMENT_TOTAL,document["document_frequency"])
-    index = 0
-    for fileObject in document["file_matches"]:
-        fileName = fileObject["file_name"]
-        urlName = fileObject["file_url"]
-        baseScore = document["scores"][index][fileName]
-        tfDf = baseScore * idfScore
-        newInfo = Info(searchTerm,fileName,tfDf,urlName)
-        newInfo.count = document["count"]
-        newInfo.priority = document["priority"]
-        infoList.append(newInfo)
-        index += 1
-    return infoList
-# Send info objects to this function one at a time while parsing	
-# Info objects are added to 3 different maps to build index later
+        self.url = url   # only used for building URL object
+        self.file = file # only used for building URL object
+        self.links = {}  # only used once term is in index dictionary
+        self.queue = []  # TODO This should be a priority queue that sorts Doc objects by score
 
-class URL(object):
+# Doc classes are only used within Info.links dictionary
+# each class has a score associated with it that is updated over time
+# as new terms are found.  We have to figure out the scoring part later.
+class Doc(object):
     def __init__(self, name, score, fileName):
         self.name = name
         self.count = 1
         self.score = score
         self.file = fileName
 
+# Send info objects to this function one at a time while parsing
+# Info objects are added to 3 different maps to build index later
 def infoToMap(info):
-    urlObject = URL(info.url, 0, info.fileName)
+    docObject = Doc(info.url, 0, info.file)
     # Check if term exists and proceed accordingly
     if info.term in index:
-        # Term exists in dictionary, update URL list
-        if urlObject.name in index[info.term].links:
-            index[info.term].links[urlObject.name].count += 1
-
-            # TODO
-            # .score will be some equation that builds a score from what we have
-            # it will score differently for h1, h2, bold, etc...
-            # this is a placeholder
-            index[info.term].links[urlObject.name].score += 1
+        # Term exists in dictionary, update File list
+        if docObject.name in index[info.term].links:
+            index[info.term].links[docObject.name].count += 1
         else:
-            index[info.term].links[urlObject.name] = urlObject
+            index[info.term].links[docObject.name] = docObject
     else:
         # Create new entry for new term
-        info.links[urlObject.name] = urlObject
+        info.links[docObject.name] = docObject
         index[info.term] = info
     # temporary maps that may be useful later
-    fileNameMap[info.fileName] = info
+    fileNameMap[info.file] = info
     urlMap[info.url] = info
-# Run writeToFile() when parsing is complete to write to file	
+
+# Run writeToFile() when parsing is complete to write to file
 def writeToFile():
     indexPickle = jsonpickle.encode(index)
     filePickle = jsonpickle.encode(fileNameMap)
     urlPickle = jsonpickle.encode(urlMap)
-    with open('indexJSON.txt', 'w') as indexFile:  
+    with open('indexJSON.txt', 'w') as indexFile:
         indexFile.write(indexPickle)
-    with open('fileNameJSON.txt', 'w') as fileNameFile: 
+    with open('fileNameJSON.txt', 'w') as fileNameFile:
         fileNameFile.write(indexPickle)
     with open('urlMapJSON.txt', 'w') as urlMapFile:
         urlMapFile.write(indexPickle)
 
 # Run loadFromFile if running the program after the files have been made
 def loadFromFile():
-    with open('indexJSON.txt', 'r') as indexFile:  
+    with open('indexJSON.txt', 'r') as indexFile:
         temp = indexFile.read()
         index = jsonpickle.decode(temp)
-    with open('fileNameJSON.txt', 'r') as fileNameFile: 
+    with open('fileNameJSON.txt', 'r') as fileNameFile:
         temp = fileNameFile.read()
         fileNameMap = jsonpickle.decode(temp)
     with open('urlMapJSON.txt', 'r') as urlMapFile:
         temp = urlMapFile.read()
-        urlMap = jsonpickle.decode(temp)     
-		
+        urlMap = jsonpickle.decode(temp)
 
-# for testing
+
+# this is where the scoring is done
+def score() :
+    ''' This is how the scoring can be done:
+        N = number of documents containing the term 
+        Doc object.count = number of times terms appears in document
+        Use the formula from the slides
+        After the document is scored, it is added to the info.queue for its term
+        
+        In search(term) function we can later account for the docObject.priority as well
+        
+        pseudocode:
+        temp = priority queue for doc objects
+            for key in index
+                for Doc object in index[key.links]
+                    score doc object with key.links.size and doc.count
+                    temp.add(doc)
+                index[key].queue = temp    
+                    
+                    
+        If there is a "concurrent modification error for index[key].queue = temp
+            instead create docMap
+            then instead of 'index[key].queue = temp' use 'docMap[key] = temp
+            afterwards, do
+                for key in docMap:
+                    index[key].queue = docMap[key].queue
+                    '''
+
+def search(term):
+    ''' Here we will return the sorted index[term].queue while accounting for docObjecct.priority as well'''
+    if term in index:
+        print(term, "found")
+    else:
+        print(term, "not found")
+
+
+# For testing
 index = {}
 fileNameMap = {}
 urlMap = {}
-##info = Info("hello", "file name", "www.file.com")
-##infoToMap(info)
-##writeToFile()
-##loadFromFile()
-##print(index["hello"].fileName)
-if __name__ == "__main__":
-    myMainCollection = CorpusParser.makeMongoCollection(CorpusParser.HOST,CorpusParser.PORT,"HW3_Corpus","HW3_Corpus")
-    informaticsDoc = myMainCollection.find_one({"query":"informatics"})
-    informaticsInfoList = parseDoc(informaticsDoc)
-    for info in informaticsInfoList:
-        infoToMap(info)
-    writeToFile()
-    loadFromFile()
+info = Info("hello", "www.url.com", 0, "file name here")
+infoToMap(info)
+writeToFile()
+#loadFromFile()
 
+print(index["hello"].file)
+print(index["hello"].links[info.url].count)
