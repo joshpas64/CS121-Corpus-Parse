@@ -1,0 +1,82 @@
+import SearchEngine
+## Go to if doc_count > 0 statement at line 58
+## Proposed change at line 68
+
+class DbEntry:
+    def __init__(self,dbHost,dbPort,dbName,tableName,searchQuery):
+        self.mainCollection = makeMongoCollection(dbHost,dbPort,dbName,tableName)
+        self.searchPhrase = searchQuery.lower().strip()
+        self.searchToken = IndexWeights.makeSearchToken(self.searchPhrase)
+        self.mweToken = IndexWeights.makeIntoMWEToken(self.searchPhrase)
+        self.queryDocument = makeDocument(self.searchToken,self.mainCollection)
+    def checkTitle(self,content,soupObj):
+        titleString = soupObj.find('title')
+        if titleString != None:
+            if titleString.string == None:
+                return 0
+            return IndexWeights.getWordCount(self.searchToken,self.mweToken,titleString.string.split())
+        else:
+            index = content.find("<body>")
+            if index == -1:
+                return 0
+            else:
+                titlePortion = content[:index]
+                return IndexWeights.getWordCount(self.searchToken,self.mweToken,titlePortion.split())
+    def updateEntry(self,urlName,urlFile):
+        try:    
+            baseFile = open(urlFile,"r",encoding="utf-8")
+            html_content = baseFile.read().lower()
+            soup = BeautifulSoup(html_content,"lxml")
+            titleCount = self.checkTitle(html_content,soup)
+            if titleCount > 0:
+                self.queryDocument["priority"]["title"] += 1
+                self.queryDocument["tagSum"] += 1
+            fileString = str(soup.find("body")).strip("<body>").strip("</body>")##get and return word count of base content first. Then check if it fits any tags
+            #fileList = re.split(r'\W|\s',fileString)
+            fileLines = re.split(r'\n',fileString)
+            doc_count = 0
+            doc_lines = []
+            currentLine = 1
+            for line in fileLines:
+                simpleList = cleanUpTags(TAG_EXP,line)
+                base_count = IndexWeights.getWordCount(self.searchToken,self.mweToken,simpleList)
+                if base_count > 0:
+                    doc_lines.append(currentLine)
+                currentLine += 1
+                doc_count += base_count
+            self.queryDocument["count"] += doc_count
+            totalTags = 0
+            for tag in KEY_TAGS:
+                tagList = soup.find_all(tag)
+                tagCount = 0
+                for item in tagList:
+                    if item.string != None and IndexWeights.getWordCount(self.searchToken,self.mweToken,item.string.split()) > 0:
+                        tagCount += 1
+                        totalTags += 1
+                self.queryDocument["priority"][tag] += tagCount
+            self.queryDocument["tagSum"] += totalTags
+            if doc_count > 0:
+                self.queryDocument["document_frequency"] += 1
+                fileDict = {}
+                fileDict["file_name"] = urlFile
+                fileDict["file_url"] = urlName
+                fileDict["lines"] = doc_lines
+                self.queryDocument["file_matches"].append(fileDict)
+                doc_score = {}
+                file_score = IndexWeights.getTfDfScore(doc_count)
+                doc_score[urlFile] = file_score
+                newInfo = SearchEngine.Info(self.searchToken,urlName,file_score,urlFile)
+                SearchEngine.infoToMap(newInfo)
+                SearchEngine.writeToFile()
+                self.queryDocument["scores"].append(doc_score)
+        except FileNotFoundError: ##Handle OS and FileErrors
+            print("There has been a File I/O error\n.The file or pathname you have selected likely does not exist.\nPlease try another filename")
+        except PermissionError:
+            print("You do not have permission to read this file.\n Try another file or go into you OS and change the file permissions")
+        except UnicodeDecodeError:
+            print("There are characters or data in this file that does not match the ASCII or UTF-8 characters this program handles.")
+            baseFile.close()
+        else:
+            baseFile.close()
+    def saveToDb(self):
+        self.mainCollection.save(self.queryDocument)
