@@ -194,7 +194,7 @@ def incrementalQuery(query,corpus,startIndex,stopIndex):
 if __name__ == "__main__":
     print("Import successful")
     corpus = getCorpusReference("WEBPAGES_CLEAN/bookkeeping.tsv") ###Example Run-Through with key term 'machine learning'
-    entry = incrementalQuery("machine  learNing",corpus,0,10000) ## An actual query through the whole corpus looks like this
+    entry = incrementalQuery("WICS",corpus,0,DOCUMENT_TOTAL) ## An actual query through the whole corpus looks like this
     print("Finished Parsing")   ## For debugging purposes you can iterate over the corpuse file by file or by number of files by adjusting its
     print("Updating Database")   ## Start and Stop Index
     entry.saveToDb()     ### Save any new entries to the MongoDB database table
