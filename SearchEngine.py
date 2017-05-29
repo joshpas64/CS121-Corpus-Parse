@@ -100,9 +100,9 @@ def score() :
 def search(term):
     ''' Here we will return the sorted index[term].queue while accounting for docObjecct.priority as well'''
     if term in index:
-        print term, "found"
+        print(term, "found")
     else:
-        print term, "not found"
+        print(term, "not found")
 
 
 # For testing
@@ -114,5 +114,5 @@ infoToMap(info)
 writeToFile()
 #loadFromFile()
 
-print index["hello"].file
-print index["hello"].links[info.url].count
+print(index["hello"].file)
+print(index["hello"].links[info.url].count)
