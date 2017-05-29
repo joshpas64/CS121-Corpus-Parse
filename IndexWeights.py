@@ -12,12 +12,6 @@ def getTfDfScore(count):
     if count == 0:
         return 0
     return (math.log(count + 1,10))
-def getQueryWeight(query,document): ####NOT DONE FIX THIS 
-    words = query.split()
-    score = 0
-    for word in words:
-        score += getTfDfScore(getWordCount(word,document)) 
-    return score
 def getIdfScore(docTotal,docFreq):
     if docFreq == 0:
         return 0
