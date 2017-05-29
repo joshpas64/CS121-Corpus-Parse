@@ -100,19 +100,20 @@ def score() :
 def search(term):
     ''' Here we will return the sorted index[term].queue while accounting for docObjecct.priority as well'''
     if term in index:
-        print term, "found"
+        print (term, "found")
     else:
-        print term, "not found"
+        print (term, "not found")
 
 
 # For testing
-index = {}
-fileNameMap = {}
-urlMap = {}
-info = Info("hello", "www.url.com", 0, "file name here")
-infoToMap(info)
-writeToFile()
-#loadFromFile()
-
-print index["hello"].file
-print index["hello"].links[info.url].count
+if __name__ == "__main__":
+    index = {}
+    fileNameMap = {}
+    urlMap = {}
+    info = Info("hello", "www.url.com", 0, "file name here")
+    infoToMap(info)
+    writeToFile()
+    #loadFromFile()
+    
+    print (index["hello"].file)
+    print (index["hello"].links[info.url].count)
