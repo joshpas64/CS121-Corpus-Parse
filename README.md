@@ -117,6 +117,52 @@ post["name"] = "new_doc"
 chosenCollection.save(post)
 ```
 
+## Setting up the files on your local Computer
+While any setup could work to have all the code in this repository run without having to modify any code, have all the python and index 
+files all in the same directory and the folder that contains all the documents of the Corpus, `WEBPAGES_CLEAN` in this directory as well
+This structure on your file system would work 
+```
+Inside of Search Engine project Folder: 
+Below are the files and folders that should be listed
+Files:
+	CorpusParser.py
+	SearchEngine.py
+	IndexWeights.py
+	searchgui.py
+	indexJSON.txt
+Folder: 
+	WEBPAGES_CLEAN //Contains all the subfolders and files of the ics uci document collection (in total 37,000+ files)
+```
+
+## Some Notes on the GUI
+So the template and the way the GUI works in <em>searchengine.py</em> is great. 
+For the way the GUI responds to a query these events should occur:
+1. Once the query has been recorded, the program will load the index file into an object variable that can be queried and processed
+2. The indexFile (indexJSON.txt, a file containing a large JSON object in text form) has to be converted from text back into a JSON 
+   Object that Python can use
+3. To do this, a call to SearchEngine.loadFromFile() will likely have to be called but only once.
+4. Once the index has been loaded into variable, let's call it indexDictionary, the GUI can just check if it is in the index.
+5. Since it is a dictionary object, a simple if word in indexDictionary is likely all that's needed
+6. If there's a match in the index, the program will return a list of objects from the index file that will be the top 10 best results 
+   for the query.
+7. From there each object should contain the fileName and url of the corresponding document.
+8. Once the GUI has its top 10 result it can display the 10 Links
+9. In terms of what should be displayed, probably only two things at most:
+* A title that represents link that can be either be the content of `<title></title>` tags for that document or its starting lines
+* A snipped below the title that could show the first 1 or 2 lines of the file that contain the search query, if possible the search 
+  query, when rendered, can be in bold to show where it matches in the document.
+This description sounds a bit vague likely because the final contents of the index file are still being worked on as well as the fact 
+that the scoring implementation is still not finalized either.
+
+All the person working on the GUI python file should worry about is just knowing how to access the index file and use or process its 
+contents. All the information it will need should be in that file (indexJSON.txt), such as the results for a query 
+and which ones to pick. 
+
+The GUI code will likely need to import the other two processing files (SearchEngine.py and CorpusParser.py) so 
+it can load the index and, in the case the query is not in the index file, execute a search through the whole collection parsing and 
+checking every document in it, adding to the index file as it goes along and then requerying the index for the new results. The
+functions and classes that do that will already be implemented in the above two files it will just need to call those methods properly.
+
 ## Mapping files to URL's 
 In the file, `bookkeeping.json` all the urls are matched into their correpsonding files in <strong>WEBPAGES_CLEAN</strong> as key, value
 pairs. When doing a search this will be the starting point of the iteration as we when we create the <strong>document object</strong> to 
