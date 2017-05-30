@@ -47,14 +47,22 @@ document_template =
    "current_rank": 3 ,
    		##Computed from scores above not sure how to implement, it is in lecture 13 slides, will likely be calculated once
    		## all files or a large number of files have been parsed
-   "file_info": [{"file_name":"0/1","url":"www.ics.uci.edu/~ejw/pres/stc-99/sld009.htm","line_encountered":[1,4,55,66,101]},		
+		##File_info contains file-to-term related information.
+		##Fields contain the file name, the tfScore which is related to the count of matching terms each document 
+		## (log(1 + count)), a dictionary object representing the amount of times the term was within the specified tags
+		## i.e. (title,h1,h2,h3,b,strong) 
+		## It is all the items of the file_info list which will eventually, after some parsing and using the SearchEngine.py 			## module, that will eventually be the values used in the inverted index. 
+   "file_info": [{"file_name":"0/1","url":"www.ics.uci.edu/~ejw/pres/stc-99/sld009.htm","line_encountered":
+   		  [1,4,55,66,101],"tags_encountered":{"title":1,"h1":0,"h2":0,"h3":2,"b":0,"strong":2},"tfScore":0.12345},		
    		 {"file_name": "0/101","url":"cbcl.ics.uci.edu/doku.php/software/arem?do=login&sectok=dd041326677606876341a676d7ce3884",
-		 	"lines_encountered":[4,5,67,89]}]
+		 	"lines_encountered":[4,5,67,89],"tag_encountered":{"title":0,"h1":2,"h2":2,"h3":1,"b":1,"strong":
+			5},"tfScore":0.42341}]
   ## To find out which file matches which url just look through bookkeeping.json
 }
 ```
 
 ## Setup
+Click <a href="https://www.mongodb.com/download-center" target="_blank">here</a> to install a local MongoDB database.
 How to <a href="http://api.mongodb.com/python/current/tutorial.html" target="_blank">link a Python Script to a MongoDB Database</a>
 
 Use a library called <strong>pymongo</strong> to do this, I installed on a Python version 3.5, not sure if it will work with Python 2 
@@ -63,6 +71,23 @@ but since this project can be done purely offline and does not use <em>spacetime
 To install through pip open a terminal and type
 ```
 python -m pip install pymongo
+```
+
+Other libraries that are used that can be installed through pip if they are not already available to you:
+Link to <a href="https://www.crummy.com/software/BeautifulSoup/bs4/doc/" target="_blank"> BeautifulSoup4 Documentation</a>
+Link to <a href="http://www.nltk.org/" target="_blank">nltk Documentation</a>
+```
+python -m pip install jsonpickle
+python -m pip install nltk
+python -m pip install lxml
+pythom -m pip install beautifulsoup4
+```
+<em>Note: </em> for <strong>NLTK</strong>, to have access to <em>all</em> libraries you must run a python shell and install them.
+You only have to do this once, in the python shell type:
+```
+import nltk
+nltk.download()
+## After this an installation window prompt appears and asks which libraries you wish to install, I installed all of them by default
 ```
 First, if your MongoDB server is on localhost turn it on with a terminal using
 For Windows:
@@ -104,7 +129,8 @@ json_obj = json.loads(json_content) ## JSON is now a python dictionary object th
 ```
 
 ## HTML Parsing
-<a href="https://www.crummy.com/software/BeautifulSoup/bs4/doc/" target="_blank">BeautifulSoup4</a> for now is the best HTML Parser and handles the broken tag problem as mentioned in the write-up.
+<a href="https://www.crummy.com/software/BeautifulSoup/bs4/doc/" target="_blank">BeautifulSoup4</a> for now is the best HTML Parser and 
+handles the broken tag problem as mentioned in the write-up.
 So for example a file of `someHTML.html`
 ```html
 <html>
