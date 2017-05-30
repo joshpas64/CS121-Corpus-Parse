@@ -58,6 +58,16 @@ def writeToFile():
         urlMapFile.write(indexPickle)
 
 # Run loadFromFile if running the program after the files have been made
+# Added a return statement so that an outside function or file could access the
+# updated index, fileNameMap, and urlMap objects
+# Was having an issue with the Global index, fileNameMap, and urlMap always returning as empty
+# This may be a scope resolution issue since the global variables are being reassigned, or as Python sees it,
+# redefined but not in a smaller local scope, so the global index, fileNameMap, and urlMap objects do not get
+# changed from there initial values as empty {}
+
+
+# If an outside module wants to access the index file as an object it can call the loadFromFile method 
+# and retrieve decoded JSON objects
 def loadFromFile():
     with open('indexJSON.txt', 'r') as indexFile:
         temp = indexFile.read()
@@ -68,7 +78,7 @@ def loadFromFile():
     with open('urlMapJSON.txt', 'r') as urlMapFile:
         temp = urlMapFile.read()
         urlMap = jsonpickle.decode(temp)
-
+    return index, fileNameMap, urlMap
 
 # this is where the scoring is done
 def score() :
@@ -109,10 +119,10 @@ def search(term):
 index = {}
 fileNameMap = {}
 urlMap = {}
-info = Info("hello", "www.url.com", 0, "file name here")
-infoToMap(info)
-writeToFile()
-#loadFromFile()
+##info = Info("hello", "www.url.com", 0, "file name here")
+##infoToMap(info)
+##writeToFile()
+##loadFromFile()
 
-print(index["hello"].file)
-print(index["hello"].links[info.url].count)
+##print(index["hello"].file)
+##print(index["hello"].links[info.url].count)
