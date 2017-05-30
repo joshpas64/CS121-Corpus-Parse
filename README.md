@@ -38,7 +38,8 @@ document_template =
 {  "query": "search_term", 
    "priority": {"h1": 5,"h2": 4, "h3": 6,"title": 2,"b": 4,"strong": 12},
    "tagSum": 33,
-   "tagRanking" : 123, ## This number would be determined by the frequency of each type of tag it was in, each one having a different 				##weight number
+   "tagRanking" : 123, ## This number would be determined by the frequency of each type of tag it was in, each one having a different 
+   		       ##weight number
    "count": 456,    ## Total amount of times it has been encountered from searching all the file so far
    "document_frequency": 2,
    "scores": [{"0/1":12}, {"0/101",4.56}],
@@ -51,7 +52,8 @@ document_template =
 		##Fields contain the file name, the tfScore which is related to the count of matching terms each document 
 		## (log(1 + count)), a dictionary object representing the amount of times the term was within the specified tags
 		## i.e. (title,h1,h2,h3,b,strong) 
-		## It is all the items of the file_info list which will eventually, after some parsing and using the SearchEngine.py 			## module, that will eventually be the values used in the inverted index. 
+		## It is all the items of the file_info list which will eventually, after some parsing and using the SearchEngine.py 
+		## module, that will eventually be the values used in the inverted index. 
    "file_info": [{"file_name":"0/1","url":"www.ics.uci.edu/~ejw/pres/stc-99/sld009.htm","line_encountered":
    		  [1,4,55,66,101],"tags_encountered":{"title":1,"h1":0,"h2":0,"h3":2,"b":0,"strong":2},"tfScore":0.12345},		
    		 {"file_name": "0/101","url":"cbcl.ics.uci.edu/doku.php/software/arem?do=login&sectok=dd041326677606876341a676d7ce3884",
