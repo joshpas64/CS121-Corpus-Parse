@@ -4,7 +4,11 @@
 # at http://jsonpickle.github.io/
 # pip install -U jsonpickle
 import jsonpickle
-
+global index, fileNameMap, urlMap
+# For testing
+index = {}
+fileNameMap = {}
+urlMap = {}
 # (object) added for jsonpickle decoding
 class Info(object):
     def __init__(self, term, url, score, file):
@@ -29,7 +33,7 @@ class Doc(object):
 # Send info objects to this function one at a time while parsing
 # Info objects are added to 3 different maps to build index later
 def infoToMap(info):
-    docObject = Doc(info.url, 0, info.file)
+    docObject = Doc(info.url, info.score, info.file)
     # Check if term exists and proceed accordingly
     if info.term in index:
         # Term exists in dictionary, update File list
@@ -68,7 +72,7 @@ def loadFromFile():
     with open('urlMapJSON.txt', 'r') as urlMapFile:
         temp = urlMapFile.read()
         urlMap = jsonpickle.decode(temp)
-
+    return index,fileNameMap, urlMap
 
 # this is where the scoring is done
 def score() :
@@ -100,20 +104,19 @@ def score() :
 def search(term):
     ''' Here we will return the sorted index[term].queue while accounting for docObjecct.priority as well'''
     if term in index:
-        print (term, "found")
+        print(term, "found")
     else:
-        print (term, "not found")
+        print(term, "not found")
 
 
-# For testing
-if __name__ == "__main__":
-    index = {}
-    fileNameMap = {}
-    urlMap = {}
-    info = Info("hello", "www.url.com", 0, "file name here")
-    infoToMap(info)
-    writeToFile()
-    #loadFromFile()
-    
-    print (index["hello"].file)
-    print (index["hello"].links[info.url].count)
+
+##info = Info("hello", "www.url.com", 0, "file name here")
+##infoToMap(info)
+##writeToFile()
+##info2 = Info("searching", "www.ics.com", 0, "WEBPAGES_CLEAN/2/1")
+##infoToMap(info2)
+##writeToFile()
+##loadFromFile()
+
+##print(index["hello"].file)
+##print(index["hello"].links[info.url].count)
