@@ -1,9 +1,13 @@
 import math
 from nltk.tokenize import MWETokenizer
+from nltk.corpus import stopwords
+STOPWORDS = set(stopwords.words("english"))
+
 def getWordCount(word,mweToken,fileContentList):
     count = 0
+    trimmed = [words for words in fileContentList if words not in STOPWORDS]
     tokenizer = MWETokenizer([mweToken])
-    tokenList = tokenizer.tokenize(fileContentList)
+    tokenList = tokenizer.tokenize(trimmed)
     for i in tokenList:
         if word.lower() == i.lower():
             count += 1
