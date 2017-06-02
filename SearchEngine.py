@@ -84,6 +84,17 @@ def loadFromFile():
     return index,fileNameMap, urlMap
 
 # this is where the scoring is done
+# This function below will retrieve a final score based on the tfIdf Score of the document and the amount and types of HTML Tags it was in
+def scoreDoc(tfScore,docCount,tagObject):
+    tfIdf = IndexWeights.getIdfScore(tfScore,docCount)
+    htmlScore = 0
+    for tag in tagObject:
+        tagCount = tagObject[tag]
+        tagWeight = HTML_WEIGHTS[tag] * tagCount
+        htmlScore += tagWeight
+    finalScore = tfIdf + htmlScore
+    return finalScore
+# This is where a whole index is scored AND SORTED
 def score() :
     ''' This is how the scoring can be done:
         N = number of documents containing the term 
@@ -108,8 +119,16 @@ def score() :
             afterwards, do
                 for key in docMap:
                     index[key].queue = docMap[key].queue
-                    '''
-
+                   '''
+##    Possible implementation of scoring the whole index
+##    for term in index:
+##        temp = queue.PriorityQueue()
+##        docCount = len(index[term].links)
+##        for key in index[term].links:
+##            doc = index[term].links[key]
+##            doc.score = scoreDoc(doc.score,docCount,doc.tagCounts)
+##            temp.add(doc)
+##        index[key].queue = temp
 def search(term):
     ''' Here we will return the sorted index[term].queue while accounting for docObjecct.priority as well'''
     if term in index:
