@@ -11,6 +11,10 @@ index = {}
 fileNameMap = {}
 urlMap = {}
 # (object) added for jsonpickle decoding
+
+## HTML_SCALES
+HTML_WEIGHTS = {"title":25,"h1":10,"h2":7.5,"h3":5,"b":2,"strong":2}
+
 class Info(object):
     def __init__(self, term, url, score, file,priority):
         self.term = term
@@ -94,8 +98,9 @@ def scoreDoc(tfScore,docCount,tagObject):
         htmlScore += tagWeight
     finalScore = tfIdf + htmlScore
     return finalScore
+
 # This is where a whole index is scored AND SORTED
-def score() :
+def score(index) :
     ''' This is how the scoring can be done:
         N = number of documents containing the term 
         Doc object.count = number of times terms appears in document
@@ -121,20 +126,77 @@ def score() :
                     index[key].queue = docMap[key].queue
                    '''
 ##    Possible implementation of scoring the whole index
-##    for term in index:
-##        temp = queue.PriorityQueue()
-##        docCount = len(index[term].links)
-##        for key in index[term].links:
-##            doc = index[term].links[key]
-##            doc.score = scoreDoc(doc.score,docCount,doc.tagCounts)
-##            temp.add(doc)
-##        index[key].queue = temp
+    for term in index:
+        temp = queue.PriorityQueue()
+        docCount = len(index[term].links)
+        for key in index[term].links:
+            doc = index[term].links[key]
+            doc.score = scoreDoc(doc.score,docCount,doc.tagCounts)
+            temp.put(doc)
+        index[term].queue = temp
+    return index
+
+
+#### Priority Queue's are stored as binary Heap Arrays in Python's there are two
+#### ways one can get the top 10 results
+#### 1. Dequeue and permanently remove the first 10 results
+#### 2. Navigate the queue as a list but keeping in mind of it's heap-tree structure
+##        This requires knowing which indexes in the priority queue must be accessed.
+##        This means keeping or maintaining a list of which indexes must be traversed.
+##        This list can be called next_index. Also a list of the top 10 items is created,
+##        resultList.
+##
+##        This involves having a variable,minium_index, that represents the next index
+##        from the priority Queue that needs to be added to the resultList. Begin by a taking the minimum
+##        of the next_index which in this case is just 0. Add the item that the
+##        index represents from the Priority Queue to the resultList. Now that the item is added
+##        remove that minimum_index from the next_index list since its contents have been added to
+##        the results. After that add the left and right children of the current node to the
+##        next_index list and reiterate.
+##
+##        In this algorithm all children closest to root get added
+##        first and than the corresponding because the next index to add, min_ind is min(nextIndexList)
+##        This means parent nodes are added first then their children in the right order
+##        ,leftmost to rightmost for each node. This process repeats for all nodes that have
+##        children until there are no more nodes left. This bounds condition is checked by ensuring
+##        the next indexes to add are less than the PriorityQueue's length.
+##        
+##        Algorithm Source: https://stackoverflow.com/questions/25823905/how-to-iterate-over-a-priority-queue-in-python
+##        Binary Heap Tree Link: http://www.cse.hut.fi/en/research/SVG/TRAKLA2/tutorials/heap_tutorial/taulukkona.html1
+##          
+def traverseQueue(queueObject):
+    q = queueObject.queue ##Get array representation of priority Queue object as Binary Heap
+    if len(q) == 0:
+        return []
+    iterIndex = [] ## The top 10 results to be returned
+    next_index = [0] ## Start at the root node
+    count = 0 
+    while next_index:
+        if count >= 10: ## Only retrieve up to 10 results
+            return iterIndex
+        min_ind = min(next_index, key = q.__getitem__) ##Index that should be added to the results should be the left most parent
+                                                ## that hasn't already been added 
+        iterIndex.append(q[min_ind]) ## Add result to resultList
+        #print(q[min_ind])
+        next_index.remove(min_ind) ## Remove index from next_index list since item has now been added to the results 
+        if 2 * min_ind + 1 < len(q): 
+            next_index.append(2 * min_ind + 1) ## Add left child of current node
+        if 2 * min_ind + 2 < len(q):
+            next_index.append(2 * min_ind + 2) ## Add right child of current node
+        count += 1
+    return iterIndex
+
+
+## Search operation for GUI to execute
 def search(term):
     ''' Here we will return the sorted index[term].queue while accounting for docObjecct.priority as well'''
+    results = []
     if term in index:
         print(term, "found")
+        results = traverseQueue(index[term].queue)
     else:
         print(term, "not found")
+    return results
 
 
 
