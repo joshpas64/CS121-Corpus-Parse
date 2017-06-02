@@ -5,6 +5,7 @@ Created on May 29, 2017
 '''
 from tkinter import *
 import webbrowser
+from SearchEngine import search
 
 class Interface(object):
     
@@ -77,11 +78,12 @@ class Interface(object):
         self.btm_frame = Frame(self.root, bg='lavender', width = 450, height = 500, pady=3)
         self.btm_frame.grid(row=1, sticky="ewn")
         # do the search here
+        results = search(queryString)
         # for each result element in the result obj, create a link 
-        
-        link = Label(self.btm_frame, text="result for {query}".format(query=queryString), fg="blue", cursor="hand2")
-        link.grid(row=self.resultrow)
-        link.bind("<Button-1>", lambda e: self.openPage(r"https://stackoverflow.com/questions/2260235/how-to-clear-the-entry-widget-after-a-button-is-pressed-in-tkinter"))
+        for result in results:
+            link = Label(self.btm_frame, text="{url}".format(url=result.name), fg="blue", cursor="hand2")
+            link.grid(row=self.resultrow)
+            link.bind("<Button-1>", lambda e: self.openPage(r"https://stackoverflow.com/questions/2260235/how-to-clear-the-entry-widget-after-a-button-is-pressed-in-tkinter"))
 
     def openPage(self, url):
         try:
