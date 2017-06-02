@@ -17,8 +17,7 @@ def parseFromDoc(document):
         tags = fileObj["tags_encountered"]
         currentScore = fileObj["tfScore"]
         currentLines = fileObj["lines"]
-        newInfo = SearchEngine.Info(currentQuery,currentUrl,currentScore,currentFile)
-        newInfo.priority = tags
+        newInfo = SearchEngine.Info(currentQuery,currentUrl,currentScore,currentFile,tags)
         infoList.append(newInfo)
         SearchEngine.infoToMap(newInfo)
 def score(infoObject,length):
@@ -49,8 +48,10 @@ def getIndexKey(term,index):
     print("Done with links")
 if __name__ == "__main__":
     print("Ran as the main file")
-    newIndex = preloadIndex()
-    getIndexKey("irvine",newIndex)
+    #newIndex = preloadIndex() If database has been updated and the index file needs to be updated
+    newIndex = SearchEngine.loadFromFile()[0] ## If database is updated and can be preloaded automatically, this takes less time than preloadIndex()
+    newIndex = SearchEngine.score(newIndex)
+    print(SearchEngine.search("irvine",newIndex)) ## Get list of results (Items in list are Doc Objects from SearchEngine.py)
 ## Sample run through on individual records
 ##    doc = referenceCollection.find_one({"query":"wics"})
 ##    parseFromDoc(doc)
