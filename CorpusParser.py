@@ -163,7 +163,7 @@ class DbEntry:
                 fileDict["tfScore"] = file_score ## Add score to file_object 'tfScore' field
                 self.queryDocument["file_matches"].append(fileDict)  ## Add it to the list of files that matches
                 self.queryDocument["scores"].append(doc_score)
-                newInfo = SearchEngine.Info(self.searchToken,urlName,file_score,urlFile) ## Make an info from the search term and file's url,score,and name
+                newInfo = SearchEngine.Info(self.searchToken,urlName,file_score,urlFile,tagObject) ## Make an info from the search term and file's url,score,and name
                 SearchEngine.infoToMap(newInfo) ## Update index objects in SearchEngine.py
                 SearchEngine.writeToFile() ## Update index Files
         except FileNotFoundError: ##Handle OS and FileErrors
