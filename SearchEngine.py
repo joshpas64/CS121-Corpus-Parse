@@ -4,6 +4,7 @@
 # at http://jsonpickle.github.io/
 # pip install -U jsonpickle
 import jsonpickle
+import queue
 global index, fileNameMap, urlMap
 # For testing
 index = {}
@@ -11,14 +12,14 @@ fileNameMap = {}
 urlMap = {}
 # (object) added for jsonpickle decoding
 class Info(object):
-    def __init__(self, term, url, score, file):
+    def __init__(self, term, url, score, file,priority):
         self.term = term
-        self.priority = ""
+        self.priority = priority
         self.score = score
         self.url = url   # only used for building URL object
         self.file = file # only used for building URL object
         self.links = {}  # only used once term is in index dictionary
-        self.queue = []  # TODO This should be a priority queue that sorts Doc objects by score
+        self.queue = queue.PriorityQueue()  # TODO This should be a priority queue that sorts Doc objects by score
 
 # Doc classes are only used within Info.links dictionary
 # each class has a score associated with it that is updated over time
@@ -29,6 +30,14 @@ class Doc(object):
         self.count = 1
         self.score = score
         self.file = fileName
+    def __eq__(self,other):
+        return self.score == other.score
+    def __ne__(self,other):
+        return self.score != other.score
+    def __gt__(self,other): ## To have the priority queue sort in reverse order (descending, highest term first)
+        return self.score < other.score
+    def __lt__(self,other):
+        return self.score > other.score       
 
 # Send info objects to this function one at a time while parsing
 # Info objects are added to 3 different maps to build index later
