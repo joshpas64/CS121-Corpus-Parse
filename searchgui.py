@@ -6,6 +6,7 @@ Created on May 29, 2017
 from tkinter import *
 import webbrowser
 from SearchEngine import search, loadFromFile, score
+import IndexWeights
 
 class Interface(object):
     
@@ -76,12 +77,15 @@ class Interface(object):
         self.resultrow =0
         queryString = self.queryEntry.get() 
         self.queryEntry.delete(0, END)
+        queryToken = IndexWeights.makeSearchToken(queryString) ##Format string into token that normalizes into lowercase and puts phrases into an MWE
+                                                        ## that makes it easier for them to search through. Phrases INITIALLY use a boolean type - search from
+                                                        ## the nltk.MWETokenizer library
         # clear the results frame
         self.btm_frame.destroy()
         self.btm_frame = Frame(self.root, bg='lavender', width = 450, height = 500, pady=3)
         self.btm_frame.grid(row=1, sticky="ewn")
         # do the search here
-        results = search(queryString,self.mainIndex)
+        results = search(queryToken,self.mainIndex) ## Do the search with the token rather than the string to get consistent results
         print (len(results))
         # for each result element in the result obj, create a link 
         if len(results)>0:
