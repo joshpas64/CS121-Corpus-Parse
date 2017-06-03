@@ -188,7 +188,7 @@ def traverseQueue(queueObject):
 
 
 ## Search operation for GUI to execute
-def search(term):
+def search(term, index):
     ''' Here we will return the sorted index[term].queue while accounting for docObjecct.priority as well'''
     results = []
     if term in index:
