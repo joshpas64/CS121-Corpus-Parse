@@ -73,6 +73,7 @@ class Interface(object):
         
     
     def doSearch(self):
+        self.resultrow =0
         queryString = self.queryEntry.get() 
         self.queryEntry.delete(0, END)
         # clear the results frame
@@ -81,13 +82,15 @@ class Interface(object):
         self.btm_frame.grid(row=1, sticky="ewn")
         # do the search here
         results = search(queryString,self.mainIndex)
+        print (len(results))
         # for each result element in the result obj, create a link 
         if len(results)>0:
             
             for result in results:
                 link = Label(self.btm_frame, text="{url}".format(url=result.name), fg="blue", cursor="hand1")
                 link.grid(row=self.resultrow)
-                link.bind("<Button-1>", lambda e: self.openPage(result.name))
+                link.bind("<Button-1>", lambda e: self.openPage(result.name, e))
+                self.resultrow +=1
                 ##Retrieve data from result
                 ##currentUrl = result.name
                 ##currentFile = result.fileName 
@@ -97,9 +100,9 @@ class Interface(object):
             link.grid(row=self.resultrow)
             
                 
-    def openPage(self, url):
+    def openPage(self, url, event):
         try:
-            webbrowser.open_new(url)
+            webbrowser.open_new(event.widget["text"])
         except:
             print ("caught")
 if __name__ == "__main__":
