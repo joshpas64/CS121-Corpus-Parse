@@ -22,7 +22,8 @@ def getIdfScore(docTotal,docFreq):
     return math.log((float(docTotal)/docFreq),10)
 def makeIntoMWEToken(phrase):
     contentList = phrase.lower().strip().split()
-    return tuple(contentList)
+    strippedContentList = [words for words in contentList if words not in STOPWORDS]
+    return tuple(strippedContentList)
 def makeSearchToken(phrase):
     contentList = phrase.lower().strip().split()
     if len(contentList) <= 1:
