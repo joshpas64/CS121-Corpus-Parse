@@ -82,14 +82,21 @@ class Interface(object):
         # do the search here
         results = search(queryString,self.mainIndex)
         # for each result element in the result obj, create a link 
-        for result in results:
-            link = Label(self.btm_frame, text="{url}".format(url=result.name), fg="blue", cursor="hand2")
+        if len(results)>0:
+            
+            for result in results:
+                link = Label(self.btm_frame, text="{url}".format(url=result.name), fg="blue", cursor="hand1")
+                link.grid(row=self.resultrow)
+                link.bind("<Button-1>", lambda e: self.openPage(result.name))
+                ##Retrieve data from result
+                ##currentUrl = result.name
+                ##currentFile = result.fileName 
+                ##link.bind("<Button-1>", lambda e: self.openPage(currentUrl))
+        else:
+            link = Label(self.btm_frame, text="{url}".format(url="no results found"), fg="blue", cursor="hand2")
             link.grid(row=self.resultrow)
-            link.bind("<Button-1>", lambda e: self.openPage(r"https://stackoverflow.com/questions/2260235/how-to-clear-the-entry-widget-after-a-button-is-pressed-in-tkinter"))
-            ##Retrieve data from result
-            ##currentUrl = result.name
-            ##currentFile = result.fileName 
-            ##link.bind("<Button-1>", lambda e: self.openPage(currentUrl))
+            
+                
     def openPage(self, url):
         try:
             webbrowser.open_new(url)

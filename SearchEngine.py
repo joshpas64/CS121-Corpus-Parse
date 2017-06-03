@@ -5,6 +5,7 @@
 # pip install -U jsonpickle
 import jsonpickle
 import queue
+from IndexWeights import *
 global index, fileNameMap, urlMap
 # For testing
 index = {}
@@ -90,7 +91,7 @@ def loadFromFile():
 # this is where the scoring is done
 # This function below will retrieve a final score based on the tfIdf Score of the document and the amount and types of HTML Tags it was in
 def scoreDoc(tfScore,docCount,tagObject):
-    tfIdf = IndexWeights.getIdfScore(tfScore,docCount)
+    tfIdf = getIdfScore(tfScore,docCount)
     htmlScore = 0
     for tag in tagObject:
         tagCount = tagObject[tag]
