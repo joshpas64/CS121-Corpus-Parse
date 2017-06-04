@@ -103,7 +103,7 @@ class Interface(object):
         else:
             link = Label(self.btm_frame, text="{url}".format(url="no results found"), fg="blue", cursor="hand2")
             link.grid(row=self.resultrow)
-            updateIndex.runQuery(queryString)
+            self.mainIndex = updateIndex.runQuery(queryString)
                 
     def openPage(self, url, event):
         try:
