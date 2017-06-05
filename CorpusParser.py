@@ -26,7 +26,7 @@ import SearchEngine
 KEY_TAGS = ["h1","h2","h3","b","strong"]
 #### Tags and HTML notation that is checked when the documents are being parsed 
 TAG_EXP = r'<title>|<h1>|<h2>|<h3>|<b>|<strong>|<p>|</p>|&amp|&lt|&gt'
-
+EXCEPTIONS = ["<body>","</body>","<p>","</p>","<title>","</title>","<h1>","</h1>","<h2>","</h2>","<h3>","<b>","</b>","<strong>","</strong>","&amp","&lt","&gt"]
 ## The json file gives a key, map of url -> corresponding filepath
 EXCLUDED_FILENAMES = ["bookkeeping.json","bookkeeping.tsv"]
 DOCUMENT_TOTAL = 37497 ## Number of documents in the whole Corpus Folder
@@ -93,6 +93,25 @@ def cleanUpTags(tag_exp,line):
     tagLessString = "".join(tagFree)
     parsed_list = re.split(r'\W+',tagLessString)
     return parsed_list
+def searchFiles(doc,file):
+    fileList = doc["file_matches"]
+    for i in fileList:
+        if i["file_name"] == file:
+            return True
+    return False
+def parseTitle(word,content,soupObj):
+    titleString = soupObj.find('title') ## To handle cases when there is text before the <body> but no <title></title> tags
+    if titleString != None: ## If there are title tags
+        if titleString.string == None: ##If there is no content in between title tags
+            return 0
+        return IndexWeights.getWordCount(word,[(word)],titleString.string.split()) ##Check if search term is between <title></title>
+    else:
+        index = content.find("<body>") ##If no tag's find index in fileString where the body occurs
+        if index == -1: ##In case there are no body tags either
+            return 0
+        else:
+            titlePortion = content[:index] ##Get portion before the <body> tag
+            return IndexWeights.getWordCount(word,[(word)],titlePortion.split()) 
 class DbEntry:
     def __init__(self,dbHost,dbPort,dbName,tableName,searchQuery):
         self.mainCollection = makeMongoCollection(dbHost,dbPort,dbName,tableName)  ## Retrieve or make a Document Template from the database
@@ -163,9 +182,9 @@ class DbEntry:
                 fileDict["tfScore"] = file_score ## Add score to file_object 'tfScore' field
                 self.queryDocument["file_matches"].append(fileDict)  ## Add it to the list of files that matches
                 self.queryDocument["scores"].append(doc_score)
-                newInfo = SearchEngine.Info(self.searchToken,urlName,file_score,urlFile,tagObject) ## Make an info from the search term and file's url,score,and name
-                SearchEngine.infoToMap(newInfo) ## Update index objects in SearchEngine.py
-                SearchEngine.writeToFile() ## Update index Files
+##                newInfo = SearchEngine.Info(self.searchToken,urlName,file_score,urlFile,tagObject) ## Make an info from the search term and file's url,score,and name
+##                SearchEngine.infoToMap(newInfo) ## Update index objects in SearchEngine.py
+##                SearchEngine.writeToFile() ## Update index Files
         except FileNotFoundError: ##Handle OS and FileErrors
             print("There has been a File I/O error\n.The file or pathname you have selected likely does not exist.\nPlease try another filename")
         except PermissionError:
@@ -180,6 +199,28 @@ class DbEntry:
 
 ###Incrementing through the Corpus File by File for debugging purposes
 ### Start Index and StopIndex are line positions in the bookkeeping.tsv file
+def getAllUniqueWords(corpus):
+    wordList = []
+    baseFile = open("indexWords.txt","a",encoding="utf-8")
+    for row in range(0,10000):
+        try:
+            file = open("WEBPAGES_CLEAN/" + corpus[row][0],"r",encoding="utf-8")
+            trimmed = IndexWeights.returnTrimmedList(file.read().lower())
+            for word in trimmed:
+                if word not in wordList:
+                    wordList.append(word)
+                    baseFile.write(word + "\n")
+        except FileNotFoundError: ##Handle OS and FileErrors
+            print("There has been a File I/O error\n.The file or pathname you have selected likely does not exist.\nPlease try another filename")
+        except PermissionError:
+            print("You do not have permission to read this file.\n Try another file or go into you OS and change the file permissions")
+        except UnicodeDecodeError:
+            print("There are characters or data in this file that does not match the ASCII or UTF-8 characters this program handles.")
+            file.close()
+        else:
+            file.close()
+    baseFile.close()
+    return wordList
 def incrementalQuery(query,corpus,startIndex,stopIndex):
     if startIndex < 0:   ## Index Checks
         startIndex = 0
@@ -190,12 +231,72 @@ def incrementalQuery(query,corpus,startIndex,stopIndex):
     for row in range(startIndex,stopIndex):
         entry.updateEntry(corpus[row][1],prefix + corpus[row][0])
     return entry ##Return entry object if one wants to get the document object it retrieve its fields or save any changes its found back to the database it refers to
-
+def runCorpus(corpus,collection): ##Check (214,215) 391-392, 
+    for row in range(0,DOCUMENT_TOTAL):
+        if "datasets" not in corpus[row][1]:
+            fileName = "WEBPAGES_CLEAN/" + corpus[row][0]
+            file = open(fileName,"r",encoding="utf-8")
+            html_content = file.read().lower()
+            soup = BeautifulSoup(html_content,"lxml")
+            fileString = str(soup.find("body")).strip("<body>").strip("</body>")
+            fileLines = re.split(r'\n',fileString)
+            contentList = IndexWeights.returnTrimmedList(html_content)
+            contentSet = set(contentList)
+            for word in contentSet:
+                doc = makeDocument(word,collection)
+                if word not in EXCEPTIONS and searchFiles(doc,fileName) == False:
+                    tagObject = {"title":0,"h1":0,"h2":0,"h3":0,"b":0,"strong":0}
+                    totalTags = 0
+                    titleCount = parseTitle(word,html_content,soup) ##Check if the search Term is in the title portion
+                    if titleCount > 0:
+                        doc["priority"]["title"] += 1  ##Increment objects accordingly if the term has a match in the title 
+                        doc["tagSum"] += 1
+                        tagObject["title"] += 1
+                    doc["document_frequency"] += 1
+                    for tag in KEY_TAGS:
+                        tagCount = 0
+                        tagList = soup.find_all(tag) ##Get list of all tag's that match that tag i.e get all 'h1' tags
+                        for item in tagList:
+                            if item.string != None and IndexWeights.getWordCount(word,[(word)],item.string.split()) > 0:
+                                tagCount += 1 ##If there are matches add to tagCount and totalTags
+                                totalTags += 1
+                                doc["priority"][tag] += tagCount ##Update the record's HTML tagObject which keeps record of tag matches for the term itself
+                                tagObject[tag] += tagCount
+                    wordCount = 0
+                    currentLine = 1
+                    file_lines = []
+                    for line in fileLines:
+                        cleanedLine = cleanUpTags(TAG_EXP,line)
+                        lineCount = IndexWeights.getWordCount(word,[(word)],cleanedLine)
+                        wordCount += lineCount
+                        if lineCount > 0:
+                            file_lines.append(currentLine)
+                        currentLine += 1
+                    doc["count"] += wordCount
+                    doc["priority"][tag] += tagCount ##Update the record's HTML tagObject which keeps record of tag matches for the term itself
+                    fileObj = {}
+                    tfScore = IndexWeights.getTfDfScore(wordCount)
+                    fileObj["tfScore"] = tfScore
+                    fileObj["file_name"] = fileName
+                    fileObj["file_url"] = corpus[row][1]
+                    fileObj["lines"] = file_lines
+                    fileObj["tags_encountered"] = tagObject
+                    doc["file_matches"].append(fileObj)
+    ##                newInfo = SearchEngine.Info(self.searchToken,urlName,file_score,urlFile,tagObject) ## Make an info from the search term and file's url,score,and name
+    ##                SearchEngine.infoToMap(newInfo) ## Update index objects in SearchEngine.py
+    ##                SearchEngine.writeToFile() ## Update index Files
+                    collection.save(doc)
+        file.close()
+        print("Finished File " + str(row))
 if __name__ == "__main__":
-    print("Import successful")
+##    print("Import successful")
     corpus = getCorpusReference("WEBPAGES_CLEAN/bookkeeping.tsv") ###Example Run-Through with key term 'machine learning'
-    entry = incrementalQuery("WICS",corpus,0,DOCUMENT_TOTAL) ## An actual query through the whole corpus looks like this
-    print("Finished Parsing")   ## For debugging purposes you can iterate over the corpuse file by file or by number of files by adjusting its
-    print("Updating Database")   ## Start and Stop Index
-    entry.saveToDb()     ### Save any new entries to the MongoDB database table
-    print("Done with run-through")
+##    entry = incrementalQuery("morphology",corpus,0,DOCUMENT_TOTAL) ## An actual query through the whole corpus looks like this
+##    print("Finished Parsing")   ## For debugging purposes you can iterate over the corpuse file by file or by number of files by adjusting its
+##    print("Updating Database")   ## Start and Stop Index
+##    entry.saveToDb()     ### Save any new entries to the MongoDB database table
+##    print("Done with run-through")
+    collection = makeMongoCollection(HOST,PORT,"HW3_Corpus","HW3_Corpus")
+    runCorpus(corpus,collection)
+    
+
