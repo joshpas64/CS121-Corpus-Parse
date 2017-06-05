@@ -17,7 +17,7 @@ def runQuery(query):
     indexToUpdate = queryIndex.preloadIndex() ## Update the index object and write it to the index files
     indexToUpdate = score(indexToUpdate) ## Implement the scoring technique on the object
     return indexToUpdate
-runQuery("ENTER YOUR QUERY HERE") ## You can put either one-word or multiword queries Corpus Parser handles multi-word queries and stopwords automatically     
+#runQuery("ENTER YOUR QUERY HERE") ## You can put either one-word or multiword queries Corpus Parser handles multi-word queries and stopwords automatically     
         
     
     
