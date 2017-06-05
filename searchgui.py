@@ -7,7 +7,6 @@ from tkinter import *
 import webbrowser
 from SearchEngine import search, loadFromFile, score
 import IndexWeights
-import updateIndex
 
 class Interface(object):
     
