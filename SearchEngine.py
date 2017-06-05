@@ -4,22 +4,19 @@
 # at http://jsonpickle.github.io/
 # pip install -U jsonpickle
 import jsonpickle
+import IndexWeights
 import queue
-from IndexWeights import *
 global index, fileNameMap, urlMap
+HTML_WEIGHTS = {"title":25,"h1":10,"h2":7.5,"h3":5,"b":2,"strong":2}
 # For testing
 index = {}
 fileNameMap = {}
 urlMap = {}
 # (object) added for jsonpickle decoding
-
-## HTML_SCALES
-HTML_WEIGHTS = {"title":25,"h1":10,"h2":7.5,"h3":5,"b":2,"strong":2}
-
 class Info(object):
-    def __init__(self, term, url, score, file,priority):
+    def __init__(self, term, url, score, file,tags):
         self.term = term
-        self.priority = priority
+        self.priority = tags
         self.score = score
         self.url = url   # only used for building URL object
         self.file = file # only used for building URL object
@@ -30,24 +27,25 @@ class Info(object):
 # each class has a score associated with it that is updated over time
 # as new terms are found.  We have to figure out the scoring part later.
 class Doc(object):
-    def __init__(self, name, score, fileName):
+    def __init__(self, name, score, fileName,tagCounts):
         self.name = name
         self.count = 1
         self.score = score
         self.file = fileName
+        self.tagCounts = tagCounts
     def __eq__(self,other):
         return self.score == other.score
     def __ne__(self,other):
         return self.score != other.score
-    def __gt__(self,other): ## To have the priority queue sort in reverse order (descending, highest term first)
+    def __gt__(self,other): ## To have the priority queue sort in reverse order (descending)
         return self.score < other.score
     def __lt__(self,other):
-        return self.score > other.score       
+        return self.score > other.score
 
 # Send info objects to this function one at a time while parsing
 # Info objects are added to 3 different maps to build index later
 def infoToMap(info):
-    docObject = Doc(info.url, info.score, info.file)
+    docObject = Doc(info.url, info.score, info.file,info.priority)
     # Check if term exists and proceed accordingly
     if info.term in index:
         # Term exists in dictionary, update File list
@@ -89,9 +87,8 @@ def loadFromFile():
     return index,fileNameMap, urlMap
 
 # this is where the scoring is done
-# This function below will retrieve a final score based on the tfIdf Score of the document and the amount and types of HTML Tags it was in
 def scoreDoc(tfScore,docCount,tagObject):
-    tfIdf = getIdfScore(tfScore,docCount)
+    tfIdf = IndexWeights.getIdfScore(tfScore,docCount)
     htmlScore = 0
     for tag in tagObject:
         tagCount = tagObject[tag]
@@ -99,8 +96,6 @@ def scoreDoc(tfScore,docCount,tagObject):
         htmlScore += tagWeight
     finalScore = tfIdf + htmlScore
     return finalScore
-
-# This is where a whole index is scored AND SORTED
 def score(index) :
     ''' This is how the scoring can be done:
         N = number of documents containing the term 
@@ -125,8 +120,7 @@ def score(index) :
             afterwards, do
                 for key in docMap:
                     index[key].queue = docMap[key].queue
-                   '''
-##    Possible implementation of scoring the whole index
+                    '''
     for term in index:
         temp = queue.PriorityQueue()
         docCount = len(index[term].links)
@@ -136,8 +130,6 @@ def score(index) :
             temp.put(doc)
         index[term].queue = temp
     return index
-
-
 #### Priority Queue's are stored as binary Heap Arrays in Python's there are two
 #### ways one can get the top 10 results
 #### 1. Dequeue and permanently remove the first 10 results
@@ -186,10 +178,7 @@ def traverseQueue(queueObject):
             next_index.append(2 * min_ind + 2) ## Add right child of current node
         count += 1
     return iterIndex
-
-
-## Search operation for GUI to execute
-def search(term, index):
+def search(term,index):
     ''' Here we will return the sorted index[term].queue while accounting for docObjecct.priority as well'''
     results = []
     if term in index:
@@ -198,7 +187,6 @@ def search(term, index):
     else:
         print(term, "not found")
     return results
-
 
 
 ##info = Info("hello", "www.url.com", 0, "file name here")
